@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PitchEdge — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f12;
+    --surface: #13161b;
+    --surface2: #181c22;
+    --border: #1e2229;
+    --accent: #00e5a0;
+    --accent-dim: rgba(0,229,160,0.12);
+    --text: #e8eaed;
+    --muted: #6b7280;
+    --danger: #ff4d4d;
+    --warn: #f59e0b;
+    --info: #60a5fa;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 10;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 15px; font-weight: 500; letter-spacing: -0.3px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
+
+  .header-center {
+    display: flex; gap: 4px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px;
+  }
+  .role-btn {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.8px;
+    text-transform: uppercase; padding: 6px 14px; border-radius: 5px;
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .role-btn.active { background: var(--accent-dim); color: var(--accent); }
+  .role-btn:hover:not(.active) { color: var(--text); }
+
+  /* hide admin btn unless admin */
+  .role-btn[data-role="admin"] { display: none; }
+  body.is-admin .role-btn[data-role="admin"] { display: block; }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .live-badge { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+  .live-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; box-shadow: 0 0 4px var(--accent); } 50% { opacity:0.4; box-shadow:none; } }
+  .btn-sm { background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 11px; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px; }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* VIEWS */
+  main { max-width: 1280px; margin: 0 auto; padding: 32px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; position: relative; overflow: hidden; }
+  .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: var(--accent); opacity:0.3; }
+  .stat-card.danger::before { background: var(--danger); }
+  .stat-card.warn::before { background: var(--warn); }
+  .stat-card.info::before { background: var(--info); }
+  .stat-label { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 600; color: var(--text); line-height: 1; font-family: var(--mono); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.danger { color: var(--danger); }
+  .stat-value.warn { color: var(--warn); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* SECTION */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+  .filter-row { display: flex; gap: 8px; }
+  .filter-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 5px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px; }
+  .filter-btn.active, .filter-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 32px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); padding: 14px 20px; text-align: left; font-weight: 400; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  td { padding: 14px 20px; font-size: 13.5px; color: var(--text); }
+
+  .score-pill { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 4px; }
+  .score-high { color: var(--accent); background: var(--accent-dim); }
+  .score-mid { color: var(--warn); background: rgba(245,158,11,0.12); }
+  .score-low { color: var(--danger); background: rgba(255,77,77,0.12); }
+
+  .mono-cell { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .rep-name { font-weight: 500; }
+
+  .objection-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .obj-tag { font-size: 11px; background: var(--border); color: var(--muted); padding: 2px 7px; border-radius: 3px; font-family: var(--mono); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* STATUS INDICATOR */
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .status-dot.green { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status-dot.red { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .status-dot.yellow { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+
+  /* SYSTEM HEALTH GRID */
+  .health-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+  .health-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .health-label { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .health-status { font-family: var(--mono); font-size: 11px; display: flex; align-items: center; }
+  .health-status.ok { color: var(--accent); }
+  .health-status.err { color: var(--danger); }
+  .health-status.warn { color: var(--warn); }
+
+  /* COMPANY CARDS */
+  .company-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .company-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; cursor: pointer; transition: border-color 0.15s; }
+  .company-card:hover { border-color: var(--accent); }
+  .company-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .company-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .company-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .cs-item { }
+  .cs-val { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--accent); }
+  .cs-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* DRILL-DOWN HEADER */
+  .back-btn { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted); cursor: pointer; margin-bottom: 24px; transition: color 0.15s; border: none; background: none; }
+  .back-btn:hover { color: var(--accent); }
+
+  /* REP SPOTLIGHT */
+  .rep-spotlight { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+  .spotlight-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px; }
+  .spotlight-title { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; }
+  .rep-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .rep-row:last-child { border-bottom: none; }
+  .rep-row-name { font-size: 13px; font-weight: 500; }
+  .rep-row-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 64px 32px; color: var(--muted); }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-title { font-family: var(--mono); font-size: 13px; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text); opacity: 0.5; }
+  .empty-sub { font-size: 12px; color: var(--muted); }
+
+  /* ERROR */
+  .error-banner { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.3); color: var(--danger); font-family: var(--mono); font-size: 12px; padding: 12px 16px; border-radius: 8px; margin-bottom: 24px; display: none; }
+
+  /* TREND BAR */
+  .trend-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .trend-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+  .trend-fill.green { background: var(--accent); }
+  .trend-fill.warn { background: var(--warn); }
+  .trend-fill.danger { background: var(--danger); }
+
+  /* ACTION BTN */
+  .action-btn { font-family: var(--mono); font-size: 11px; padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; letter-spacing: 0.5px; }
+  .action-btn:hover { border-color: var(--info); color: var(--info); }
+  .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .health-grid { grid-template-columns: 1fr; }
+    .rep-spotlight { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+    header { padding: 14px 16px; }
+    .header-center { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    PitchEdge
+  </div>
+
+  <div class="header-center">
+    <button class="role-btn" data-role="admin" onclick="switchView('admin')">Admin</button>
+    <button class="role-btn active" data-role="manager" onclick="switchView('manager')">Manager</button>
+    <button class="role-btn" data-role="rep" onclick="switchView('rep')">My Calls</button>
+  </div>
+
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <button class="btn-sm" onclick="loadData()">↻ Refresh</button>
+  </div>
+</header>
+
+<main>
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- ═══════════════════════════════════════════ ADMIN VIEW -->
+  <div class="view" id="view-admin">
+
+    <div class="section-header" style="margin-bottom:24px;">
+      <div>
+        <div style="font-size:20px;font-weight:600;margin-bottom:4px;">Founder Overview</div>
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);">All accounts · All activity · System health</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="adminLastUpdated">—</div>
+    </div>
+
+    <!-- System Health -->
+    <div class="section-header"><div class="section-title">System Health</div></div>
+    <div class="health-grid" id="healthGrid">
+      <div class="health-card"><span class="health-label">Railway Deploy</span><span class="health-status ok" id="hRailway"><span class="status-dot green"></span>Online</span></div>
+      <div class="health-card"><span class="health-label">Twilio</span><span class="health-status ok" id="hTwilio"><span class="status-dot green"></span>Connected</span></div>
+      <div class="health-card"><span class="health-label">ElevenLabs</span><span class="health-status ok" id="hEleven"><span class="status-dot green"></span>Connected</span></div>
+      <div class="health-card"><span class="health-label">OpenAI GPT-4o</span><span class="health-status ok" id="hOpenAI"><span class="status-dot green"></span>Connected</span></div>
+      <div class="health-card"><span class="health-label">PostgreSQL</span><span class="health-status ok" id="hDB"><span class="status-dot green"></span>Online</span></div>
+      <div class="health-card"><span class="health-label">Last Call</span><span class="health-status ok" id="hLastCall"><span class="status-dot yellow"></span>No calls yet</span></div>
+    </div>
+
+    <!-- Global Stats -->
+    <div class="stats-row" style="grid-template-columns: repeat(5,1fr);">
+      <div class="stat-card">
+        <div class="stat-label">Total Calls</div>
+        <div class="stat-value accent" id="adminStatCalls">—</div>
+        <div class="stat-sub">all accounts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Accounts</div>
+        <div class="stat-value accent" id="adminStatAccounts">—</div>
+        <div class="stat-sub">companies</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Reps</div>
+        <div class="stat-value" id="adminStatReps">—</div>
+        <div class="stat-sub">trained</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Platform Avg</div>
+        <div class="stat-value" id="adminStatAvg">—</div>
+        <div class="stat-sub">score / 100</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">This Week</div>
+        <div class="stat-value accent" id="adminStatWeek">—</div>
+        <div class="stat-sub">calls</div>
+      </div>
+    </div>
+
+    <!-- Company accounts -->
+    <div id="adminDrillWrap" style="display:none;">
+      <button class="back-btn" onclick="exitDrill()">← Back to all accounts</button>
+      <div id="adminDrillContent"></div>
+    </div>
+
+    <div id="adminAccountsWrap">
+      <div class="section-header"><div class="section-title">Accounts</div></div>
+      <div class="company-grid" id="companyGrid">
+        <div style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:24px;">Loading accounts…</div>
+      </div>
+
+      <!-- All calls table -->
+      <div class="section-header">
+        <div class="section-title">All Calls</div>
+        <div class="filter-row">
+          <button class="filter-btn active" onclick="setAdminFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="setAdminFilter('high',this)">High ≥80</button>
+          <button class="filter-btn" onclick="setAdminFilter('mid',this)">Mid 50–79</button>
+          <button class="filter-btn" onclick="setAdminFilter('low',this)">Low &lt;50</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Company</th><th>Rep</th><th>Score</th><th>Industry</th><th>Duration</th><th>Objections</th><th>Date / Time</th>
+          </tr></thead>
+          <tbody id="adminCallsBody"><tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📞</div><div class="empty-title">Loading…</div></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ MANAGER VIEW -->
+  <div class="view active" id="view-manager">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Calls</div>
+        <div class="stat-value accent" id="statTotal">—</div>
+        <div class="stat-sub">all time</div>
+        <div class="trend-bar"><div class="trend-fill green" id="trendTotal" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Score</div>
+        <div class="stat-value" id="statAvg">—</div>
+        <div class="stat-sub">out of 100</div>
+        <div class="trend-bar"><div class="trend-fill green" id="trendAvg" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Top Rep</div>
+        <div class="stat-value" id="statTop" style="font-size:18px;padding-top:6px;">—</div>
+        <div class="stat-sub">highest avg score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">This Week</div>
+        <div class="stat-value accent" id="statWeek">—</div>
+        <div class="stat-sub">calls completed</div>
+      </div>
+    </div>
+
+    <!-- Rep spotlight -->
+    <div class="rep-spotlight">
+      <div class="spotlight-card">
+        <div class="spotlight-title">Rep Leaderboard</div>
+        <div id="repLeaderboard"><div style="color:var(--muted);font-size:12px;">No data yet</div></div>
+      </div>
+      <div class="spotlight-card">
+        <div class="spotlight-title">Needs Attention</div>
+        <div id="repNeedsAttention"><div style="color:var(--muted);font-size:12px;">No data yet</div></div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Call Log</div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('high',this)">High ≥80</button>
+        <button class="filter-btn" onclick="setFilter('mid',this)">Mid 50–79</button>
+        <button class="filter-btn" onclick="setFilter('low',this)">Low &lt;50</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Rep</th><th>Score</th><th>Industry</th><th>Duration</th><th>Objections</th><th>Date / Time</th></tr></thead>
+        <tbody id="callsBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📞</div><div class="empty-title">Loading…</div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ REP VIEW -->
+  <div class="view" id="view-rep">
+
+    <div class="stats-row" style="grid-template-columns: repeat(3,1fr);">
+      <div class="stat-card">
+        <div class="stat-label">My Calls</div>
+        <div class="stat-value accent" id="repStatCalls">—</div>
+        <div class="stat-sub">total sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">My Avg Score</div>
+        <div class="stat-value" id="repStatAvg">—</div>
+        <div class="stat-sub">out of 100</div>
+        <div class="trend-bar"><div class="trend-fill green" id="repTrend" style="width:0%"></div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Best Score</div>
+        <div class="stat-value accent" id="repStatBest">—</div>
+        <div class="stat-sub">personal best</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">My Call History</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Score</th><th>Industry</th><th>Duration</th><th>Objections</th><th>Date / Time</th><th>Feedback</th></tr></thead>
+        <tbody id="repCallsBody"><tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📞</div><div class="empty-title">No calls yet</div><div class="empty-sub">Your training calls will appear here</div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ─── STATE ───────────────────────────────────────────────
+  let allCalls = [];
+  let currentFilter = 'all';
+  let adminFilter = 'all';
+  let currentView = 'manager';
+
+  // ─── ROLE DETECTION ──────────────────────────────────────
+  // In production: read from session/cookie set by server
+  // For now: expose admin view. Wire to your auth when ready.
+  const userRole = window.PITCHEDGE_ROLE || 'admin'; // change to 'manager' or 'rep' per user
+  const repName  = window.PITCHEDGE_REP   || null;   // set for rep view
+
+  if (userRole === 'admin') document.body.classList.add('is-admin');
+
+  function switchView(v) {
+    if (v === 'admin' && userRole !== 'admin') return;
+    currentView = v;
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + v).classList.add('active');
+    document.querySelectorAll('.role-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.role === v);
+    });
+    renderAll();
+  }
+
+  // ─── DATA FETCH ───────────────────────────────────────────
+  async function loadData() {
+    try {
+      const res = await fetch('/api/calls');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      allCalls = await res.json();
+      document.getElementById('errorBanner').style.display = 'none';
+    } catch(e) {
+      document.getElementById('errorBanner').style.display = 'block';
+      document.getElementById('errorBanner').textContent = 'Could not load call data — ' + e.message;
+      allCalls = [];
+    }
+    renderAll();
+    checkHealth();
+  }
+
+  async function checkHealth() {
+    try {
+      const res = await fetch('/api/health');
+      if (res.ok) {
+        const h = await res.json();
+        setHealth('hRailway', true, 'Online');
+        setHealth('hDB',      h.db      !== false, h.db      !== false ? 'Online' : 'Error');
+        setHealth('hTwilio',  h.twilio  !== false, h.twilio  !== false ? 'Connected' : 'Check keys');
+        setHealth('hEleven',  h.eleven  !== false, h.eleven  !== false ? 'Connected' : 'Check keys');
+        setHealth('hOpenAI',  h.openai  !== false, h.openai  !== false ? 'Connected' : 'Check keys');
+      }
+    } catch(e) { /* health endpoint optional */ }
+
+    // Last call time
+    if (allCalls.length) {
+      const last = new Date(allCalls[0].created_at);
+      const mins = Math.round((Date.now() - last) / 60000);
+      const label = mins < 60 ? mins + 'm ago' : Math.round(mins/60) + 'h ago';
+      setHealth('hLastCall', true, label, 'green');
+    }
+    document.getElementById('adminLastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+  }
+
+  function setHealth(id, ok, label, forceColor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const color = forceColor || (ok ? 'green' : 'red');
+    const cls   = ok ? 'ok' : 'err';
+    el.className = 'health-status ' + cls;
+    el.innerHTML = `<span class="status-dot ${color}"></span>${label}`;
+  }
+
+  // ─── RENDER ALL ───────────────────────────────────────────
+  function renderAll() {
+    renderManagerView();
+    renderAdminView();
+    renderRepView();
+  }
+
+  // ─── MANAGER VIEW ─────────────────────────────────────────
+  function renderManagerView() {
+    const calls = allCalls;
+    const total = calls.length;
+    document.getElementById('statTotal').textContent = total || '0';
+    document.getElementById('trendTotal').style.width = Math.min(total * 5, 100) + '%';
+
+    if (!total) {
+      ['statAvg','statTop','statWeek'].forEach(id => document.getElementById(id).textContent = '—');
+      renderRepSpotlight([]);
+      renderCallsTable();
+      return;
+    }
+
+    const scored = calls.filter(c => c.score != null);
+    const avg = scored.length ? Math.round(scored.reduce((s,c) => s+c.score,0)/scored.length) : 0;
+    document.getElementById('statAvg').textContent = avg;
+    document.getElementById('trendAvg').style.width = avg + '%';
+    const trendEl = document.getElementById('trendAvg');
+    trendEl.className = 'trend-fill ' + (avg>=70?'green':avg>=50?'warn':'danger');
+
+    const repMap = buildRepMap(scored);
+    const sorted = Object.entries(repMap).sort((a,b) => b[1].avg - a[1].avg);
+    document.getElementById('statTop').textContent = sorted.length ? sorted[0][0] : '—';
+
+    const weekAgo = new Date(Date.now() - 7*86400000);
+    document.getElementById('statWeek').textContent = calls.filter(c => new Date(c.created_at) > weekAgo).length;
+
+    renderRepSpotlight(sorted);
+    renderCallsTable();
+  }
+
+  function buildRepMap(calls) {
+    const m = {};
+    calls.forEach(c => {
+      const n = c.rep_name || 'Unknown';
+      if (!m[n]) m[n] = { total: 0, sum: 0, avg: 0, calls: 0 };
+      m[n].total++; m[n].calls++; m[n].sum += c.score;
+    });
+    Object.keys(m).forEach(n => m[n].avg = Math.round(m[n].sum/m[n].total));
+    return m;
+  }
+
+  function renderRepSpotlight(sorted) {
+    const lb = document.getElementById('repLeaderboard');
+    const na = document.getElementById('repNeedsAttention');
+    if (!sorted.length) {
+      lb.innerHTML = '<div style="color:var(--muted);font-size:12px;">No data yet</div>';
+      na.innerHTML = '<div style="color:var(--muted);font-size:12px;">No data yet</div>';
+      return;
+    }
+    lb.innerHTML = sorted.slice(0,5).map(([name,d],i) => `
+      <div class="rep-row">
+        <div><div class="rep-row-name">${i===0?'🏆 ':''}${name}</div><div class="rep-row-meta">${d.calls} call${d.calls!==1?'s':''}</div></div>
+        <span class="score-pill ${d.avg>=80?'score-high':d.avg>=50?'score-mid':'score-low'}">${d.avg}</span>
+      </div>`).join('');
+    const struggling = sorted.filter(([,d]) => d.avg < 60).slice(0,5);
+    na.innerHTML = struggling.length ? struggling.map(([name,d]) => `
+      <div class="rep-row">
+        <div><div class="rep-row-name">${name}</div><div class="rep-row-meta">avg ${d.avg} · ${d.calls} call${d.calls!==1?'s':''}</div></div>
+        <span class="score-pill score-low">${d.avg}</span>
+      </div>`).join('') : '<div style="color:var(--accent);font-size:12px;font-family:var(--mono);">All reps scoring ≥60 ✓</div>';
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('#view-manager .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCallsTable();
+  }
+
+  function renderCallsTable() {
+    let calls = allCalls;
+    if (currentFilter==='high') calls = calls.filter(c=>c.score>=80);
+    else if (currentFilter==='mid') calls = calls.filter(c=>c.score>=50&&c.score<80);
+    else if (currentFilter==='low') calls = calls.filter(c=>c.score<50);
+    const tbody = document.getElementById('callsBody');
+    tbody.innerHTML = calls.length ? calls.map(c => callRow(c)).join('') : emptyHTML(6);
+  }
+
+  // ─── ADMIN VIEW ───────────────────────────────────────────
+  function renderAdminView() {
+    const calls = allCalls;
+    document.getElementById('adminStatCalls').textContent = calls.length || '0';
+
+    const companies = [...new Set(calls.map(c => c.company || 'Default'))];
+    document.getElementById('adminStatAccounts').textContent = companies.length || '1';
+
+    const reps = [...new Set(calls.map(c => c.rep_name).filter(Boolean))];
+    document.getElementById('adminStatReps').textContent = reps.length || '0';
+
+    const scored = calls.filter(c=>c.score!=null);
+    const avg = scored.length ? Math.round(scored.reduce((s,c)=>s+c.score,0)/scored.length) : 0;
+    document.getElementById('adminStatAvg').textContent = avg || '—';
+
+    const weekAgo = new Date(Date.now()-7*86400000);
+    document.getElementById('adminStatWeek').textContent = calls.filter(c=>new Date(c.created_at)>weekAgo).length;
+
+    renderCompanyGrid(companies, calls);
+    renderAdminCallsTable();
+  }
+
+  function renderCompanyGrid(companies, calls) {
+    const grid = document.getElementById('companyGrid');
+    if (!companies.length) {
+      grid.innerHTML = '<div style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:8px;">No accounts yet — first call will create one</div>';
+      return;
+    }
+    grid.innerHTML = companies.map(co => {
+      const coCalls = calls.filter(c=>(c.company||'Default')===co);
+      const scored  = coCalls.filter(c=>c.score!=null);
+      const avg     = scored.length ? Math.round(scored.reduce((s,c)=>s+c.score,0)/scored.length) : 0;
+      const reps    = [...new Set(coCalls.map(c=>c.rep_name).filter(Boolean))].length;
+      const weekAgo = new Date(Date.now()-7*86400000);
+      const week    = coCalls.filter(c=>new Date(c.created_at)>weekAgo).length;
+      return `<div class="company-card" onclick="drillInto('${co}')">
+        <div class="company-name">${co}</div>
+        <div class="company-meta">${reps} rep${reps!==1?'s':''} · click to inspect</div>
+        <div class="company-stats">
+          <div class="cs-item"><div class="cs-val">${coCalls.length}</div><div class="cs-lbl">total calls</div></div>
+          <div class="cs-item"><div class="cs-val">${avg||'—'}</div><div class="cs-lbl">avg score</div></div>
+          <div class="cs-item"><div class="cs-val">${week}</div><div class="cs-lbl">this week</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function drillInto(company) {
+    const coCalls = allCalls.filter(c=>(c.company||'Default')===company);
+    document.getElementById('adminAccountsWrap').style.display='none';
+    document.getElementById('adminDrillWrap').style.display='block';
+    const repMap = buildRepMap(coCalls.filter(c=>c.score!=null));
+    const sorted = Object.entries(repMap).sort((a,b)=>b[1].avg-a[1].avg);
+    document.getElementById('adminDrillContent').innerHTML = `
+      <div style="font-size:20px;font-weight:600;margin-bottom:4px;">${company}</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:24px;">${coCalls.length} calls · ${sorted.length} reps</div>
+      <div class="rep-spotlight">
+        <div class="spotlight-card">
+          <div class="spotlight-title">Rep Rankings</div>
+          ${sorted.length ? sorted.map(([name,d],i)=>`
+            <div class="rep-row">
+              <div><div class="rep-row-name">${i===0?'🏆 ':''}${name}</div><div class="rep-row-meta">${d.calls} call${d.calls!==1?'s':''}</div></div>
+              <span class="score-pill ${d.avg>=80?'score-high':d.avg>=50?'score-mid':'score-low'}">${d.avg}</span>
+            </div>`).join('') : '<div style="color:var(--muted);font-size:12px;">No scored calls yet</div>'}
+        </div>
+        <div class="spotlight-card">
+          <div class="spotlight-title">Recent Activity</div>
+          ${coCalls.slice(0,5).map(c=>{
+            const dt = new Date(c.created_at);
+            return `<div class="rep-row">
+              <div><div class="rep-row-name">${c.rep_name||'Unknown'}</div>
+              <div class="rep-row-meta">${dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div></div>
+              ${c.score!=null?`<span class="score-pill ${c.score>=80?'score-high':c.score>=50?'score-mid':'score-low'}">${c.score}</span>`:'<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">—</span>'}
+            </div>`;
+          }).join('')||'<div style="color:var(--muted);font-size:12px;">No calls yet</div>'}
+        </div>
+      </div>
+      <div class="section-header"><div class="section-title">All Calls for ${company}</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rep</th><th>Score</th><th>Industry</th><th>Duration</th><th>Objections</th><th>Date / Time</th></tr></thead>
+          <tbody>${coCalls.length?coCalls.map(c=>callRow(c)).join(''):emptyHTML(6)}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function exitDrill() {
+    document.getElementById('adminDrillWrap').style.display='none';
+    document.getElementById('adminAccountsWrap').style.display='block';
+  }
+
+  function setAdminFilter(f,btn) {
+    adminFilter=f;
+    document.querySelectorAll('#view-admin .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAdminCallsTable();
+  }
+
+  function renderAdminCallsTable() {
+    let calls = allCalls;
+    if (adminFilter==='high') calls=calls.filter(c=>c.score>=80);
+    else if (adminFilter==='mid') calls=calls.filter(c=>c.score>=50&&c.score<80);
+    else if (adminFilter==='low') calls=calls.filter(c=>c.score<50);
+    const tbody = document.getElementById('adminCallsBody');
+    tbody.innerHTML = calls.length ? calls.map(c=>`
+      <tr>
+        <td style="color:var(--muted);font-size:13px;">${c.company||'Default'}</td>
+        ${callRowInner(c)}
+      </tr>`).join('') : emptyHTML(7);
+  }
+
+  // ─── REP VIEW ─────────────────────────────────────────────
+  function renderRepView() {
+    const myCalls = repName ? allCalls.filter(c=>c.rep_name===repName) : allCalls;
+    document.getElementById('repStatCalls').textContent = myCalls.length||'0';
+    const scored = myCalls.filter(c=>c.score!=null);
+    const avg = scored.length ? Math.round(scored.reduce((s,c)=>s+c.score,0)/scored.length):0;
+    const best = scored.length ? Math.max(...scored.map(c=>c.score)) : null;
+    document.getElementById('repStatAvg').textContent = avg||'—';
+    document.getElementById('repTrend').style.width = avg+'%';
+    document.getElementById('repTrend').className = 'trend-fill '+(avg>=70?'green':avg>=50?'warn':'danger');
+    document.getElementById('repStatBest').textContent = best!=null?best:'—';
+    const tbody = document.getElementById('repCallsBody');
+    tbody.innerHTML = myCalls.length ? myCalls.map(c=>`
+      <tr>
+        <td>${c.score!=null?`<span class="score-pill ${c.score>=80?'score-high':c.score>=50?'score-mid':'score-low'}">${c.score}</span>`:'<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">—</span>'}</td>
+        <td style="color:var(--muted);font-size:13px;">${c.industry||'Estate Agency'}</td>
+        <td class="mono-cell">${fmtDuration(c.duration_seconds)}</td>
+        <td><div class="objection-tags">${fmtObjections(c.objections_used)}</div></td>
+        <td class="mono-cell">${fmtDate(c.created_at)}</td>
+        <td style="font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.feedback||'—'}</td>
+      </tr>`).join('') : emptyHTML(6,'No calls yet','Your training sessions will appear here');
+  }
+
+  // ─── HELPERS ──────────────────────────────────────────────
+  function callRow(c) { return `<tr>${callRowInner(c)}</tr>`; }
+  function callRowInner(c) {
+    return `
+      <td class="rep-name">${c.rep_name||'Unknown'}</td>
+      <td>${c.score!=null?`<span class="score-pill ${c.score>=80?'score-high':c.score>=50?'score-mid':'score-low'}">${c.score}</span>`:'<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">—</span>'}</td>
+      <td style="color:var(--muted);font-size:13px;">${c.industry||'Estate Agency'}</td>
+      <td class="mono-cell">${fmtDuration(c.duration_seconds)}</td>
+      <td><div class="objection-tags">${fmtObjections(c.objections_used)}</div></td>
+      <td class="mono-cell">${fmtDate(c.created_at)}</td>`;
+  }
+  function fmtDuration(s) { return s?`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`:'—'; }
+  function fmtObjections(o) {
+    if (!o) return '<span style="color:var(--muted);font-size:12px;">—</span>';
+    return (Array.isArray(o)?o:JSON.parse(o)).slice(0,3).map(x=>`<span class="obj-tag" title="${x}">${x}</span>`).join('');
+  }
+  function fmtDate(d) {
+    const dt=new Date(d);
+    return `${dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} · ${dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;
+  }
+  function emptyHTML(cols, title='No calls yet', sub='Completed training calls will appear here') {
+    return `<tr><td colspan="${cols}"><div class="empty-state"><div class="empty-icon">📞</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div></td></tr>`;
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────
+  // Set starting view based on role
+  if (userRole === 'admin') switchView('admin');
+  else if (userRole === 'rep') switchView('rep');
+  else switchView('manager');
+
+  loadData();
+  setInterval(loadData, 30000);
+</script>
+</body>
+</html>
