@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PitchEdge — AI Sales Training</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #07090F;
+    --surface: #0C0F1A;
+    --surface2: #121726;
+    --border-dark: rgba(255,255,255,0.09);
+    --white: #FFFFFF;
+    --off-white: #F4F6FB;
+    --text-dark: #0F1523;
+    --text-body: #374151;
+    --text-muted-light: #6B7280;
+    --text-muted-dark: #8A95AE;
+    --accent: #2563EB;
+    --accent-bright: #3B82F6;
+    --accent-light: #60A5FA;
+    --red: #EF4444;
+  }
+
+  html { scroll-behavior: smooth; }
+  body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 18px 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(7,9,15,0.92); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-dark);
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
+  .logo-pitch { color: var(--white); }
+  .logo-edge { color: var(--accent-bright); }
+  nav ul { display: flex; gap: 36px; list-style: none; align-items: center; }
+  nav ul a { color: var(--text-muted-dark); text-decoration: none; font-size: 14px; font-weight: 400; transition: color 0.2s; }
+  nav ul a:hover { color: var(--white); }
+  .nav-cta { background: var(--accent) !important; color: var(--white) !important; padding: 10px 22px; border-radius: 7px; font-weight: 600 !important; font-size: 14px !important; transition: background 0.2s !important; }
+  .nav-cta:hover { background: var(--accent-bright) !important; }
+
+  /* EARLY ACCESS BANNER */
+  .early-banner {
+    background: linear-gradient(90deg, rgba(37,99,235,0.15), rgba(59,130,246,0.1));
+    border-bottom: 1px solid rgba(59,130,246,0.2);
+    padding: 10px 52px; text-align: center;
+    font-size: 13px; color: var(--accent-light);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 101;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .early-banner strong { color: var(--white); }
+  .early-banner a { color: var(--accent-light); text-decoration: underline; }
+  nav { top: 40px; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    padding: 170px 52px 90px; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -100px; left: 30%;
+    width: 800px; height: 700px;
+    background: radial-gradient(ellipse, rgba(37,99,235,0.1) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .grid-overlay {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, black 0%, transparent 100%);
+  }
+
+  .hero-inner {
+    max-width: 1200px; margin: 0 auto; width: 100%;
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+  }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 100px; padding: 6px 14px;
+    font-size: 12px; color: var(--accent-light); font-weight: 500;
+    letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 28px;
+  }
+  .badge-dot { width: 6px; height: 6px; background: var(--accent-light); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(38px, 4.5vw, 60px);
+    font-weight: 800; line-height: 1.08;
+    letter-spacing: -2px; margin-bottom: 24px; color: var(--white);
+  }
+  h1 em { font-style: normal; color: var(--accent-bright); }
+
+  .hero-sub { font-size: 18px; color: #BDC5D8; line-height: 1.75; max-width: 480px; margin-bottom: 16px; font-weight: 400; }
+  .hero-industries { font-size: 13px; color: var(--text-muted-dark); margin-bottom: 36px; }
+  .hero-industries span { color: var(--accent-light); }
+
+  .hero-actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: var(--white);
+    padding: 15px 30px; border-radius: 8px;
+    font-weight: 700; font-size: 15px; text-decoration: none;
+    transition: all 0.25s; box-shadow: 0 0 40px rgba(37,99,235,0.3);
+  }
+  .btn-primary:hover { background: var(--accent-bright); transform: translateY(-2px); box-shadow: 0 0 60px rgba(59,130,246,0.45); }
+
+  .btn-ghost { display: inline-flex; align-items: center; gap: 10px; color: #BDC5D8; font-size: 14px; text-decoration: none; transition: color 0.2s; }
+  .btn-ghost:hover { color: var(--white); }
+  .play-icon { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 11px; padding-left: 2px; }
+
+  /* HERO CARD */
+  .hero-visual { position: relative; display: flex; justify-content: center; padding: 40px 160px 40px 140px; }
+  .phone-card {
+    background: var(--surface); border: 1px solid rgba(59,130,246,0.18);
+    border-radius: 20px; padding: 32px; width: 340px;
+    box-shadow: 0 50px 100px rgba(0,0,0,0.6); position: relative;
+  }
+  .phone-card::before {
+    content: ''; position: absolute; inset: -1px; border-radius: 20px;
+    background: linear-gradient(145deg, rgba(59,130,246,0.18), transparent 50%);
+    z-index: -1; pointer-events: none;
+  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted-dark); font-weight: 500; }
+  .live-badge { display: flex; align-items: center; gap: 6px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 100px; padding: 4px 10px; font-size: 11px; color: #FCA5A5; font-weight: 600; }
+  .live-dot { width: 5px; height: 5px; background: var(--red); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+  .waveform { display: flex; align-items: center; gap: 3px; height: 50px; margin-bottom: 24px; }
+  .wave-bar { flex: 1; background: linear-gradient(to top, var(--accent), var(--accent-light)); border-radius: 2px; opacity: 0.8; animation: wave 1.3s ease-in-out infinite; }
+  .wave-bar:nth-child(1){height:18%;animation-delay:0.0s} .wave-bar:nth-child(2){height:55%;animation-delay:0.1s} .wave-bar:nth-child(3){height:80%;animation-delay:0.2s} .wave-bar:nth-child(4){height:38%;animation-delay:0.3s} .wave-bar:nth-child(5){height:92%;animation-delay:0.4s} .wave-bar:nth-child(6){height:50%;animation-delay:0.5s} .wave-bar:nth-child(7){height:72%;animation-delay:0.6s} .wave-bar:nth-child(8){height:28%;animation-delay:0.7s} .wave-bar:nth-child(9){height:85%;animation-delay:0.8s} .wave-bar:nth-child(10){height:42%;animation-delay:0.9s} .wave-bar:nth-child(11){height:63%;animation-delay:1.0s} .wave-bar:nth-child(12){height:22%;animation-delay:1.1s}
+  @keyframes wave { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.35)} }
+
+  .objection-bubble { background: var(--surface2); border: 1px solid var(--border-dark); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; font-size: 13px; color: #C5CCDC; line-height: 1.5; }
+  .objection-bubble.ai { border-color: rgba(59,130,246,0.28); background: rgba(59,130,246,0.07); }
+  .bubble-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; font-weight: 600; }
+  .bubble-label.client { color: var(--text-muted-dark); }
+  .bubble-label.ai-label { color: var(--accent-light); }
+
+  .float-card {
+    position: absolute; background: var(--surface2);
+    border: 1px solid rgba(59,130,246,0.18); border-radius: 12px;
+    padding: 12px 18px; font-size: 12px; white-space: nowrap;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .float-card { display: none; }
+  
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .float-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--accent-light); letter-spacing: -1px; }
+  .float-label { color: #BDC5D8; font-size: 11px; margin-top: 2px; }
+
+  /* TRUSTED BY */
+  .trusted-bar {
+    background: var(--surface); border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark);
+    padding: 28px 52px; text-align: center;
+  }
+  .trusted-bar p { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted-dark); margin-bottom: 16px; }
+  .trusted-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .trusted-pill {
+    background: var(--surface2); border: 1px solid var(--border-dark);
+    border-radius: 100px; padding: 8px 20px; font-size: 13px; color: #BDC5D8;
+  }
+
+  /* SECTIONS */
+  .section-dark { background: var(--black); padding: 100px 52px; }
+  .section-light { background: var(--off-white); padding: 100px 52px; }
+  .section-white { background: var(--white); padding: 100px 52px; }
+  .section-inner { max-width: 1100px; margin: 0 auto; }
+
+  .section-tag-dark { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-light); font-weight: 600; margin-bottom: 16px; }
+  .section-tag-light { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); font-weight: 600; margin-bottom: 16px; }
+
+  h2 { font-family: 'Syne', sans-serif; font-size: clamp(30px, 3vw, 46px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 16px; }
+  h2.dark { color: var(--white); }
+  h2.light { color: var(--text-dark); }
+  h2.on-blue { color: var(--white); }
+
+  .section-sub-dark { color: #BDC5D8; font-size: 17px; max-width: 560px; line-height: 1.75; margin-bottom: 60px; font-weight: 400; }
+  .section-sub-light { color: var(--text-body); font-size: 17px; max-width: 560px; line-height: 1.75; margin-bottom: 60px; font-weight: 400; }
+
+  /* STEPS */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .step { background: var(--surface); border: 1px solid var(--border-dark); padding: 40px 36px; transition: background 0.3s; }
+  .step:first-child { border-radius: 16px 0 0 16px; }
+  .step:last-child { border-radius: 0 16px 16px 0; }
+  .step:hover { background: var(--surface2); }
+  .step-num { font-family: 'Syne', sans-serif; font-size: 72px; font-weight: 800; color: rgba(59,130,246,0.08); line-height: 1; margin-bottom: 24px; letter-spacing: -4px; }
+  .step-icon { width: 44px; height: 44px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 20px; }
+  .step h3 { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.4px; color: var(--white); }
+  .step p { color: #BDC5D8; font-size: 15px; line-height: 1.75; }
+
+  /* DEMO ANIMATION */
+  .demo-section { background: var(--black); padding: 80px 52px; }
+  .demo-inner { max-width: 860px; margin: 0 auto; }
+  .demo-wrap {
+    background: #0a0a0f; border: 1px solid rgba(59,130,246,0.15);
+    border-radius: 20px; padding: 48px 40px; margin-top: 48px;
+    overflow: hidden;
+  }
+  .demo-stage { display: none; flex-direction: column; align-items: center; gap: 24px; }
+  .demo-stage.active { display: flex; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .demo-stage-label { font-size: 11px; letter-spacing: 0.12em; color: #4a6fa5; text-transform: uppercase; font-weight: 500; }
+  .demo-phone-ring { width: 80px; height: 80px; border-radius: 50%; background: #1a2744; border: 2px solid #2a4a8a; display: flex; align-items: center; justify-content: center; font-size: 32px; position: relative; }
+  .demo-ring-pulse { position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 2px solid #3a6adf; animation: demoRing 1.2s ease-out infinite; }
+  .demo-ring-pulse:nth-child(2) { animation-delay: 0.4s; }
+  @keyframes demoRing { 0%{transform:scale(1);opacity:0.8} 100%{transform:scale(2.2);opacity:0} }
+  .demo-dial-text { font-size: 22px; font-weight: 500; color: #e0e8ff; }
+  .demo-dial-sub { font-size: 14px; color: #5a7ab5; }
+  .demo-waveform { display: flex; align-items: center; gap: 4px; height: 48px; }
+  .demo-wave-bar { width: 5px; border-radius: 3px; background: #3a7adf; animation: demoWave 0.8s ease-in-out infinite alternate; }
+  .demo-wave-bar:nth-child(2){animation-delay:0.1s} .demo-wave-bar:nth-child(3){animation-delay:0.2s} .demo-wave-bar:nth-child(4){animation-delay:0.3s} .demo-wave-bar:nth-child(5){animation-delay:0.15s} .demo-wave-bar:nth-child(6){animation-delay:0.25s} .demo-wave-bar:nth-child(7){animation-delay:0.05s} .demo-wave-bar:nth-child(8){animation-delay:0.35s} .demo-wave-bar:nth-child(9){animation-delay:0.12s}
+  @keyframes demoWave { from{height:8px} to{height:40px} }
+  .demo-bubble { max-width: 420px; border-radius: 16px; padding: 14px 18px; font-size: 15px; line-height: 1.5; width: 100%; }
+  .demo-bubble.ai-b { background: #1a1f35; border: 1px solid #2a3560; color: #c0ccf0; border-bottom-left-radius: 4px; }
+  .demo-bubble.rep-b { background: #1a2e1a; border: 1px solid #2a5a2a; color: #c0e0c0; border-bottom-right-radius: 4px; }
+  .demo-bubble-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; margin-bottom: 6px; text-transform: uppercase; }
+  .demo-bubble.ai-b .demo-bubble-label { color: #5a7adf; }
+  .demo-bubble.rep-b .demo-bubble-label { color: #5aaf5a; }
+  .demo-bubbles { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .demo-score-card { background: #0f1525; border: 1px solid #2a3a6a; border-radius: 16px; padding: 24px 28px; width: 100%; max-width: 420px; }
+  .demo-score-title { font-size: 13px; color: #5a7ab5; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .demo-score-big { font-size: 56px; font-weight: 600; color: #4adf8a; text-align: center; line-height: 1; margin-bottom: 6px; font-family: 'Syne', sans-serif; }
+  .demo-score-sub { font-size: 13px; color: #3a8a5a; text-align: center; margin-bottom: 20px; }
+  .demo-score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .demo-score-row-label { font-size: 13px; color: #8090b0; width: 140px; flex-shrink: 0; }
+  .demo-score-bar-bg { flex: 1; height: 6px; background: #1a2040; border-radius: 3px; overflow: hidden; }
+  .demo-score-bar-fill { height: 6px; border-radius: 3px; animation: demoFillBar 0.8s ease-out forwards; }
+  .demo-score-bar-fill.good { background: #4adf8a; }
+  .demo-score-bar-fill.mid { background: #dfaf4a; }
+  @keyframes demoFillBar { from{width:0} }
+  .demo-score-val { font-size: 13px; font-weight: 500; color: #c0d0f0; width: 32px; text-align: right; }
+  .demo-progress-dots { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+  .demo-dot { width: 8px; height: 8px; border-radius: 50%; background: #2a3a6a; transition: background 0.3s; }
+  .demo-dot.active { background: #3a6adf; }
+  .demo-live-badge { display: inline-flex; align-items: center; gap: 6px; background: #2a1a1a; border: 1px solid #6a2a2a; border-radius: 20px; padding: 4px 12px; font-size: 12px; color: #ef6a6a; font-weight: 500; }
+  .demo-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4a4a; animation: demoBlink 1s ease-in-out infinite; }
+  @keyframes demoBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .demo-next-btn { background: transparent; border: 1px solid #2a4a8a; color: #5a8adf; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .demo-next-btn:hover { background: #1a2a5a; color: #8ab0ff; }
+
+  /* PRACTICE BANNER */
+  .practice-banner {
+    background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.18);
+    border-radius: 16px; padding: 36px 40px; margin-top: 48px;
+    display: flex; align-items: flex-start; gap: 28px;
+  }
+  .practice-banner-icon { width: 52px; height: 52px; flex-shrink: 0; background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .practice-banner h3 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 10px; letter-spacing: -0.3px; }
+  .practice-banner p { color: #BDC5D8; font-size: 15px; line-height: 1.75; }
+
+  /* BENEFITS */
+  .benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .benefit-card { background: var(--white); border: 1px solid #DDE3EF; border-radius: 16px; padding: 36px 32px; transition: all 0.3s; box-shadow: 0 2px 12px rgba(37,99,235,0.05); }
+  .benefit-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(37,99,235,0.1); border-color: rgba(37,99,235,0.2); }
+  .benefit-icon-wrap { width: 52px; height: 52px; background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.14); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 20px; }
+  .benefit-card h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.3px; color: var(--text-dark); }
+  .benefit-card p { color: var(--text-body); font-size: 15px; line-height: 1.7; }
+
+  /* FEATURES */
+  .features-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .feature { background: var(--white); border: 1px solid #DDE3EF; border-radius: 16px; padding: 36px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(37,99,235,0.04); }
+  .feature:hover { box-shadow: 0 8px 32px rgba(37,99,235,0.1); border-color: rgba(37,99,235,0.2); transform: translateY(-2px); }
+  .feature-icon { font-size: 26px; margin-bottom: 18px; }
+  .feature h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.3px; color: var(--text-dark); }
+  .feature p { color: var(--text-body); font-size: 15px; line-height: 1.75; }
+
+  /* INDUSTRIES */
+  .industry-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 40px; }
+  .industry-tag { background: var(--surface2); border: 1px solid var(--border-dark); border-radius: 100px; padding: 10px 20px; font-size: 13px; color: #BDC5D8; transition: all 0.2s; cursor: pointer; user-select: none; }
+  .industry-tag:hover { border-color: rgba(59,130,246,0.4); color: var(--white); }
+  .industry-tag.active { border-color: rgba(59,130,246,0.5); color: var(--accent-light); background: rgba(59,130,246,0.1); }
+
+  /* FAQ */
+  .faq-list { margin-top: 48px; }
+  .faq-item { border-bottom: 1px solid var(--border-dark); overflow: hidden; }
+  .faq-q { width: 100%; background: none; border: none; color: var(--white); font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; text-align: left; padding: 24px 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; letter-spacing: -0.3px; }
+  .faq-q:hover { color: var(--accent-light); }
+  .faq-chevron { font-size: 18px; transition: transform 0.3s; flex-shrink: 0; color: var(--accent-light); }
+  .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; color: #BDC5D8; font-size: 15px; line-height: 1.8; padding: 0; }
+  .faq-item.open .faq-a { max-height: 300px; padding-bottom: 24px; }
+  .faq-item.open .faq-chevron { transform: rotate(180deg); }
+
+  /* PRICING */
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 60px; }
+  .price-card { background: var(--white); border: 1px solid #DDE3EF; border-radius: 16px; padding: 40px 36px; transition: all 0.3s; position: relative; box-shadow: 0 2px 8px rgba(37,99,235,0.04); display: flex; flex-direction: column; }
+  .price-card:hover { box-shadow: 0 12px 40px rgba(37,99,235,0.1); transform: translateY(-2px); }
+  .price-card.featured { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37,99,235,0.12), 0 12px 40px rgba(37,99,235,0.1); }
+  .popular-tag { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--white); font-size: 10px; font-weight: 700; padding: 4px 16px; border-radius: 100px; letter-spacing: 0.8px; text-transform: uppercase; white-space: nowrap; font-family: 'Syne', sans-serif; }
+  .price-tier { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted-light); margin-bottom: 16px; font-weight: 600; }
+  .price-headline { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-dark); letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 12px; }
+  .price-desc { color: var(--text-body); font-size: 14px; line-height: 1.65; margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid #E5E9F2; flex-grow: 1; }
+  .price-features { list-style: none; margin-bottom: 32px; }
+  .price-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-body); padding: 6px 0; line-height: 1.5; }
+  .price-features li::before { content: '✓'; color: var(--accent); font-weight: 700; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .price-btn { display: block; text-align: center; padding: 15px; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s; border: 1px solid #DDE3EF; color: var(--text-dark); font-family: 'DM Sans', sans-serif; margin-top: auto; }
+  .price-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(37,99,235,0.04); }
+  .price-btn.featured-btn { background: var(--accent); color: var(--white); border-color: var(--accent); box-shadow: 0 4px 20px rgba(37,99,235,0.3); font-weight: 700; }
+  .price-btn.featured-btn:hover { background: var(--accent-bright); box-shadow: 0 4px 30px rgba(59,130,246,0.4); }
+  .price-note { text-align: center; margin-top: 28px; font-size: 13px; color: var(--text-muted-light); line-height: 1.7; }
+
+  /* CONTACT */
+  .contact-section { background: var(--surface); padding: 80px 52px; border-top: 1px solid var(--border-dark); }
+  .contact-inner { max-width: 700px; margin: 0 auto; text-align: center; }
+  .contact-inner h2 { color: var(--white); margin-bottom: 16px; }
+  .contact-inner p { color: #BDC5D8; font-size: 17px; margin-bottom: 40px; }
+  .contact-card { background: var(--surface2); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px; padding: 36px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .contact-email { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent-light); text-decoration: none; }
+  .contact-email:hover { color: var(--white); }
+  .contact-note { font-size: 13px; color: var(--text-muted-dark); }
+
+  /* CTA */
+  .cta-section { background: var(--accent); padding: 100px 52px; text-align: center; position: relative; overflow: hidden; }
+  .cta-section::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%); pointer-events: none; }
+  .cta-section h2 { max-width: 620px; margin: 0 auto 20px; }
+  .cta-section p { color: rgba(255,255,255,0.88); font-size: 18px; max-width: 460px; margin: 0 auto 40px; font-weight: 400; }
+  .cta-actions { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .btn-white { display: inline-flex; align-items: center; gap: 8px; background: var(--white); color: var(--accent); padding: 15px 32px; border-radius: 8px; font-size: 15px; font-weight: 700; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .btn-white-outline { display: inline-flex; align-items: center; gap: 8px; border: 2px solid rgba(255,255,255,0.5); color: var(--white); padding: 13px 28px; border-radius: 8px; font-size: 15px; font-weight: 500; text-decoration: none; transition: all 0.2s; }
+  .btn-white-outline:hover { border-color: var(--white); background: rgba(255,255,255,0.1); }
+  .cta-note { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.7); }
+
+  /* FOOTER */
+  footer { padding: 36px 52px; border-top: 1px solid var(--border-dark); background: var(--black); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+  .footer-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; }
+  .footer-logo-pitch { color: var(--white); }
+  .footer-logo-edge { color: var(--accent-bright); }
+  footer p { color: var(--text-muted-dark); font-size: 13px; }
+  .footer-links { display: flex; gap: 28px; }
+  .footer-links a { color: var(--text-muted-dark); font-size: 13px; text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--white); }
+
+  /* ANIM */
+  .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.65s ease, transform 0.65s ease; }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+  .section-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(37,99,235,0.25), transparent); }
+
+  /* MOBILE */
+  @media (max-width: 900px) {
+    .early-banner { padding: 10px 16px; font-size: 12px; }
+    nav { padding: 16px 24px; top: 40px; }
+    nav ul { display: none; }
+    .hero, .section-dark, .section-light, .section-white, .demo-section, .contact-section { padding: 70px 24px; }
+    .hero { padding-top: 120px; }
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-visual { display: none; }
+    .steps { grid-template-columns: 1fr; gap: 2px; }
+    .step:first-child { border-radius: 16px 16px 0 0; }
+    .step:last-child { border-radius: 0 0 16px 16px; }
+    .benefits-grid, .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+    .practice-banner { flex-direction: column; }
+    footer { padding: 28px 24px; flex-direction: column; gap: 16px; }
+    .cta-actions { flex-direction: column; align-items: stretch; }
+    .cta-section { padding: 70px 24px; }
+    .float-card { display: none; }
+    .trusted-bar { padding: 24px 20px; }
+    .demo-wrap { padding: 32px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- EARLY ACCESS BANNER -->
+<div class="early-banner">
+  <strong>Now accepting early access partners</strong> — Get set up within 1-2 weeks. <a href="#contact">Get in touch →</a>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo"><span class="logo-pitch">Pitch</span><span class="logo-edge">Edge</span></div>
+  <ul>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#benefits">Benefits</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#contact" class="nav-cta">Get in Touch</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="grid-overlay"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge"><span class="badge-dot"></span>AI Sales Training</div>
+      <h1>Practice the pitch <em>before</em> it counts.</h1>
+      <p class="hero-sub">PitchEdge puts your sales team on a live AI call that behaves like a real client — pushing back, stalling, objecting. They get the practice run. You get a team that's ready.</p>
+      <p class="hero-industries">Built for <span>estate agency</span>, <span>financial services</span>, <span>recruitment</span> and more.</p>
+      <div class="hero-actions">
+        <a href="#contact" class="btn-primary">
+          Book a Demo
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#how" class="btn-ghost"><span class="play-icon">▶</span>See how it works</a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="float-card top-left">
+        <div class="float-val">Instant</div>
+        <div class="float-label">Post-call scoring</div>
+      </div>
+      <div class="phone-card">
+        <div class="card-header">
+          <span class="card-label">Live Training Call</span>
+          <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+        </div>
+        <div class="waveform">
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+        </div>
+        <div class="objection-bubble">
+          <div class="bubble-label client">AI Client</div>
+          "I'm already with another company — why would I switch?"
+        </div>
+        <div class="objection-bubble ai">
+          <div class="bubble-label ai-label">Sales Person ✓</div>
+          "That's exactly why I'm calling — let me show you what sets us apart..."
+        </div>
+      </div>
+      <div class="float-card bottom-right">
+        <div class="float-val">On demand</div>
+        <div class="float-label">Train when it matters</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUSTED BY -->
+<div class="trusted-bar">
+  <p>Currently piloting with</p>
+  <div class="trusted-pills">
+    <span class="trusted-pill">🏠 UK Estate Agencies</span>
+    <span class="trusted-pill">💰 Financial Services Firms</span>
+    <span class="trusted-pill">👔 Recruitment Companies</span>
+    <span class="trusted-pill">💼 High-Ticket Sales Teams</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section-dark" id="how">
+  <div class="section-inner">
+    <div class="section-tag-dark">How it works</div>
+    <h2 class="dark">The practice run before the real call.</h2>
+    <p class="section-sub-dark">Before a big pitch, a new client, or a difficult renewal — your team dials in, faces the objections, and walks in ready. No guesswork. No surprises.</p>
+    <div class="steps">
+      <div class="step fade-up">
+        <div class="step-num">01</div>
+        <div class="step-icon">📞</div>
+        <h3>Dial in and practice</h3>
+        <p>Your team calls a dedicated number before their real client call. An AI prospect answers — natural conversation, real pressure, genuine objections. The practice run that prepares them for what's coming.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">02</div>
+        <div class="step-icon">🎯</div>
+        <h3>Handle the objections</h3>
+        <p>The AI throws the objections your team faces every day. "I'm already with someone else." "Your fee is too high." "I need to think about it." They respond live, under real pressure, before it counts.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">03</div>
+        <div class="step-icon">📊</div>
+        <h3>Instant feedback</h3>
+        <p>The moment the call ends, a full scorecard appears — confidence, rebuttal quality, pacing, close attempt. They know exactly what to sharpen before walking into the real thing.</p>
+      </div>
+    </div>
+    <div class="practice-banner fade-up">
+      <div class="practice-banner-icon">✈️</div>
+      <div>
+        <h3>Pilots don't fly without a simulator first.</h3>
+        <p>Surgeons practise before they operate. Athletes train before they compete. Yet most sales teams walk into high-value calls having never rehearsed the objections they know are coming. PitchEdge changes that — a real practice run, before the real thing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANIMATED DEMO -->
+<section class="demo-section">
+  <div class="demo-inner">
+    <div class="section-tag-dark" style="text-align:center">See it in action</div>
+    <h2 class="dark" style="text-align:center;max-width:500px;margin:0 auto 12px">What a PitchEdge call looks like</h2>
+    <p style="text-align:center;color:#BDC5D8;font-size:16px">Four steps. One practice call. Walk in ready.</p>
+    <div class="demo-wrap">
+      <div class="demo-stage active" id="ds-1">
+        <div class="demo-stage-label">Step 1 — Rep dials in</div>
+        <div class="demo-phone-ring">
+          <div class="demo-ring-pulse"></div>
+          <div class="demo-ring-pulse"></div>
+          📞
+        </div>
+        <div class="demo-dial-text">PitchEdge Training Line</div>
+        <div class="demo-dial-sub">Your rep calls the dedicated number</div>
+        <button class="demo-next-btn" onclick="demoGoTo(2)">Next →</button>
+      </div>
+      <div class="demo-stage" id="ds-2">
+        <div class="demo-stage-label">Step 2 — AI client answers</div>
+        <div class="demo-live-badge"><div class="demo-live-dot"></div> Live call</div>
+        <div class="demo-waveform">
+          <div class="demo-wave-bar" style="height:20px"></div><div class="demo-wave-bar" style="height:30px"></div>
+          <div class="demo-wave-bar" style="height:14px"></div><div class="demo-wave-bar" style="height:38px"></div>
+          <div class="demo-wave-bar" style="height:22px"></div><div class="demo-wave-bar" style="height:32px"></div>
+          <div class="demo-wave-bar" style="height:16px"></div><div class="demo-wave-bar" style="height:28px"></div>
+          <div class="demo-wave-bar" style="height:24px"></div>
+        </div>
+        <div class="demo-bubble ai-b">
+          <div class="demo-bubble-label">AI Client</div>
+          "Look, I'm quite happy with my current agent to be honest — I don't really see why I'd switch."
+        </div>
+        <button class="demo-next-btn" onclick="demoGoTo(3)">Next →</button>
+      </div>
+      <div class="demo-stage" id="ds-3">
+        <div class="demo-stage-label">Step 3 — Rep handles the objection</div>
+        <div class="demo-bubbles">
+          <div class="demo-bubble ai-b">
+            <div class="demo-bubble-label">AI Client</div>
+            "I already have an agent who's had it months — why would I switch now?"
+          </div>
+          <div class="demo-bubble rep-b">
+            <div class="demo-bubble-label">Sales rep ✓</div>
+            "That's exactly why I'm calling — if they've had it months without a result, something needs to change. Let me show you what we do differently."
+          </div>
+        </div>
+        <button class="demo-next-btn" onclick="demoGoTo(4)">Next →</button>
+      </div>
+      <div class="demo-stage" id="ds-4">
+        <div class="demo-stage-label">Step 4 — Instant score</div>
+        <div class="demo-score-card">
+          <div class="demo-score-title">Call performance</div>
+          <div class="demo-score-big">84</div>
+          <div class="demo-score-sub">Strong performance — ready for live calls</div>
+          <div class="demo-score-row">
+            <div class="demo-score-row-label">Objection handling</div>
+            <div class="demo-score-bar-bg"><div class="demo-score-bar-fill good" style="width:91%"></div></div>
+            <div class="demo-score-val">91</div>
+          </div>
+          <div class="demo-score-row">
+            <div class="demo-score-row-label">Tone &amp; confidence</div>
+            <div class="demo-score-bar-bg"><div class="demo-score-bar-fill good" style="width:87%"></div></div>
+            <div class="demo-score-val">87</div>
+          </div>
+          <div class="demo-score-row">
+            <div class="demo-score-row-label">Close attempt</div>
+            <div class="demo-score-bar-bg"><div class="demo-score-bar-fill mid" style="width:74%"></div></div>
+            <div class="demo-score-val">74</div>
+          </div>
+          <div class="demo-score-row">
+            <div class="demo-score-row-label">Listening &amp; pace</div>
+            <div class="demo-score-bar-bg"><div class="demo-score-bar-fill good" style="width:83%"></div></div>
+            <div class="demo-score-val">83</div>
+          </div>
+        </div>
+        <button class="demo-next-btn" onclick="demoGoTo(1)">↺ Replay</button>
+      </div>
+      <div class="demo-progress-dots">
+        <div class="demo-dot active" id="dd-1"></div>
+        <div class="demo-dot" id="dd-2"></div>
+        <div class="demo-dot" id="dd-3"></div>
+        <div class="demo-dot" id="dd-4"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- BENEFITS -->
+<section class="section-white" id="benefits">
+  <div class="section-inner">
+    <div class="section-tag-light">Why PitchEdge</div>
+    <h2 class="light">The edge your competitors don't have.</h2>
+    <p class="section-sub-light">Sales is won or lost in the moment an objection lands. PitchEdge makes sure your team is ready for every one of them — before they pick up the phone for real.</p>
+    <div class="benefits-grid">
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon-wrap">🎙️</div>
+        <h3>A Realistic AI Client</h3>
+        <p>Our AI behaves like a real client — it hesitates, challenges, changes tack mid-conversation. It's built for how buyers actually behave, not a scripted simulation. The pressure feels real because it is.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon-wrap">📞</div>
+        <h3>A Real Phone Call</h3>
+        <p>Not a chatbot. Not an avatar. Your team dials in on an actual call — the same format as a real client conversation. The habits they build transfer directly to the real thing.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon-wrap">⚡</div>
+        <h3>Instant Scoring</h3>
+        <p>No waiting for a manager review. The moment the call ends, your team gets a full breakdown of what worked, what didn't, and what to improve — right before they need it most.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon-wrap">🎯</div>
+        <h3>Tailored to Your Industry</h3>
+        <p>Pre-loaded with objections across estate agency, financial services, recruitment, SaaS and more. Add your own to match your exact product, market and buyer type.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon-wrap">📈</div>
+        <h3>Full Management Visibility</h3>
+        <p>See every score, every call, every improvement across your team. Know who is ready to walk into a high-value pitch and who needs another practice run — before it affects your pipeline.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon-wrap">🔄</div>
+        <h3>On-Demand, Any Time</h3>
+        <p>Train before a big pitch, when onboarding someone new, or when entering a market your team hasn't faced before. No scheduling, no manager involvement. Just preparation, when it's needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section-light" id="features">
+  <div class="section-inner">
+    <div class="section-tag-light">Features</div>
+    <h2 class="light">Built for serious sales teams.</h2>
+    <p class="section-sub-light">Every feature in PitchEdge exists to move one number — your close rate.</p>
+    <div class="features-grid">
+      <div class="feature fade-up">
+        <div class="feature-icon">🎙️</div>
+        <h3>Realistic Voice AI</h3>
+        <p>Our AI client sounds and behaves like a real prospect — challenging, unpredictable, and pressure-inducing. Your team faces genuine resistance in training, so the real call feels familiar rather than frightening.</p>
+      </div>
+      <div class="feature fade-up">
+        <div class="feature-icon">📚</div>
+        <h3>Custom Objection Libraries</h3>
+        <p>Built-in objection sets across estate agency, financial services, recruitment and more. Add your own to match your product, your buyers and your specific market challenges.</p>
+      </div>
+      <div class="feature fade-up">
+        <div class="feature-icon">📊</div>
+        <h3>Management Dashboard</h3>
+        <p>Complete visibility across your team. Every score, every call, every trend over time. Know exactly who is ready to pitch and who needs more preparation before they face a real client.</p>
+      </div>
+      <div class="feature fade-up">
+        <div class="feature-icon">🔄</div>
+        <h3>On-Demand Training</h3>
+        <p>Before a big pitch, a new hire's first week, or a difficult renewal — your team trains when it matters most. No booking, no awkwardness, no waiting for a manager. Preparation on demand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INDUSTRIES -->
+<section class="section-dark">
+  <div class="section-inner">
+    <div class="section-tag-dark">Industries</div>
+    <h2 class="dark">Works for any sales team, any sector.</h2>
+    <p class="section-sub-dark">PitchEdge adapts to your industry, your objections and your buyers. The platform stays the same — the training is entirely yours.</p>
+    <div class="industry-tags">
+      <span class="industry-tag active">🏠 Estate Agency</span>
+      <span class="industry-tag">💰 Financial Services</span>
+      <span class="industry-tag">👔 Recruitment</span>
+      <span class="industry-tag">💼 High-Ticket Sales</span>
+      <span class="industry-tag">☀️ Solar &amp; Renewables</span>
+      <span class="industry-tag">💻 SaaS &amp; Tech</span>
+      <span class="industry-tag">📋 Insurance</span>
+      <span class="industry-tag">🏢 Commercial Property</span>
+      <span class="industry-tag">🚗 Automotive</span>
+      <span class="industry-tag">📦 Field Sales</span>
+      <span class="industry-tag">🤝 B2B Services</span>
+      <span class="industry-tag">🏋️ Fitness &amp; Wellness</span>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section-dark" style="padding-top:0">
+  <div class="section-inner">
+    <div class="section-tag-dark">FAQ</div>
+    <h2 class="dark">Common questions.</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">How does PitchEdge actually work? <span class="faq-chevron">▾</span></button>
+        <div class="faq-a">Your team calls a dedicated training number. An AI client answers and conducts a realistic sales conversation — throwing the objections your team faces every day. When the call ends, they receive an instant scorecard breaking down their performance across objection handling, tone, pacing and close attempt.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Do we need any special equipment? <span class="faq-chevron">▾</span></button>
+        <div class="faq-a">No. Your team uses their existing phones — mobile or desk. No apps to download, no software to install. If they can make a phone call, they can use PitchEdge.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Can we add our own objections? <span class="faq-chevron">▾</span></button>
+        <div class="faq-a">Yes. Every plan includes the ability to upload custom objections specific to your product, market and buyer type. Growth and Enterprise plans include a full custom objection library built with you during onboarding.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">How quickly can we get started? <span class="faq-chevron">▾</span></button>
+        <div class="faq-a">Most teams are up and running within 1-2 weeks of getting in touch. We'll walk you through the setup process step by step.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Is there a minimum team size? <span class="faq-chevron">▾</span></button>
+        <div class="faq-a">No minimum. We work with teams of all sizes — from a solo sales consultant wanting to sharpen their pitch, to enterprise organisations training hundreds of reps. Get in touch and we'll put together the right package.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Is it suitable for new starters? <span class="faq-chevron">▾</span></button>
+        <div class="faq-a">Absolutely — it's ideal for onboarding. New starters can practise dozens of calls in their first week without taking up manager time or risking live client relationships. They build confidence faster, ramp quicker, and hit the ground running.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section-white" id="pricing">
+  <div class="section-inner">
+    <div class="section-tag-light">Pricing</div>
+    <h2 class="light">Tailored to your team.</h2>
+    <p class="section-sub-light">Every sales team is different — in size, sector and what they need from training. We price accordingly. Get in touch and we'll put together the right package for you.</p>
+    <div class="pricing-grid">
+      <div class="price-card fade-up">
+        <div class="price-tier">Starter</div>
+        <div class="price-headline">For growing sales teams</div>
+        <p class="price-desc">Ideal for smaller teams looking to sharpen objection handling, reduce ramp time for new starters, and build consistent habits across the team.</p>
+        <ul class="price-features">
+          <li>Up to 10 team members</li>
+          <li>Core objection library included</li>
+          <li>Instant post-call scoring</li>
+          <li>Management dashboard</li>
+          <li>Email support</li>
+        </ul>
+        <a href="#contact" class="price-btn">Get in Touch</a>
+      </div>
+      <div class="price-card featured fade-up">
+        <div class="popular-tag">Most Popular</div>
+        <div class="price-tier">Growth</div>
+        <div class="price-headline">For established sales teams</div>
+        <p class="price-desc">For teams who want full customisation, deeper analytics and higher call volumes — with onboarding support included to get your team up and running fast.</p>
+        <ul class="price-features">
+          <li>Up to 30 team members</li>
+          <li>Full objection library</li>
+          <li>Custom objection upload</li>
+          <li>Advanced performance analytics</li>
+          <li>Onboarding included</li>
+          <li>Priority support</li>
+        </ul>
+        <a href="#contact" class="price-btn featured-btn">Get in Touch</a>
+      </div>
+      <div class="price-card fade-up">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-headline">For large organisations</div>
+        <p class="price-desc">For corporate sales teams, franchise groups and large organisations who need scale, compliance, custom personas and full white-label capability.</p>
+        <ul class="price-features">
+          <li>Unlimited team members</li>
+          <li>White-label option</li>
+          <li>Custom AI personas</li>
+          <li>Dedicated account manager</li>
+          <li>Full onboarding &amp; training</li>
+          <li>SSO &amp; compliance</li>
+        </ul>
+        <a href="#contact" class="price-btn">Get in Touch</a>
+      </div>
+    </div>
+    <p class="price-note">All plans include a 14-day free trial &nbsp;·&nbsp; Flexible contracts &nbsp;·&nbsp; Pricing excludes VAT<br>Get in touch and we'll build the right package for your team.</p>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-inner">
+    <div class="section-tag-dark" style="text-align:center">Get in touch</div>
+    <h2>Ready to get started?</h2>
+    <p>Drop us an email and we'll have you up and running within 1-2 weeks. No long contracts, no hard sell — just a conversation about whether PitchEdge is right for your team.</p>
+    <div class="contact-card">
+      <a href="mailto:info@getpitchedge.co.uk" class="contact-email">info@getpitchedge.co.uk</a>
+      <div class="contact-note">We typically respond within a few hours during business hours.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div style="position:relative;z-index:2;">
+    <div class="section-tag-dark" style="color:rgba(255,255,255,0.7)">Get started</div>
+    <h2 class="on-blue">Your team's next deal depends on what they say.</h2>
+    <p>Give them the practice run. Get in touch and we'll have you up and running within 1-2 weeks.</p>
+    <div class="cta-actions">
+      <a href="mailto:info@getpitchedge.co.uk" class="btn-white">
+        Book a Demo
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#how" class="btn-white-outline">See How It Works</a>
+    </div>
+    <p class="cta-note">Flexible contracts &nbsp;·&nbsp; No hidden fees &nbsp;·&nbsp; 14-day free trial included</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><span class="footer-logo-pitch">Pitch</span><span class="footer-logo-edge">Edge</span></div>
+  <p>© 2026 PitchEdge. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Use</a>
+    <a href="/cookie.html">Cookie Policy</a>
+    <a href="mailto:info@getpitchedge.co.uk">Contact</a>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), entry.target.dataset.delay || 0);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-up').forEach((el, i) => {
+    el.dataset.delay = (i % 3) * 100;
+    observer.observe(el);
+  });
+
+  document.querySelectorAll('.industry-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      document.querySelectorAll('.industry-tag').forEach(t => t.classList.remove('active'));
+      tag.classList.add('active');
+    });
+  });
+
+  function demoGoTo(n) {
+    for(let i=1;i<=4;i++){
+      document.getElementById('ds-'+i).classList.remove('active');
+      document.getElementById('dd-'+i).classList.remove('active');
+    }
+    document.getElementById('ds-'+n).classList.add('active');
+    document.getElementById('dd-'+n).classList.add('active');
+  }
+
+  function toggleFaq(btn) {
+    const item = btn.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+</script>
+</body>
+</html>
