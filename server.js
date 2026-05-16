@@ -5,6 +5,13 @@ const http = require('http');
 const path = require('path');
 const { Pool } = require('pg');
 const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many login attempts. Try again in 15 minutes.'
+});
 
 const app = express();
 app.use(express.urlencoded({ extended: false }));
@@ -54,7 +61,7 @@ app.get('/login', (req, res) => {
 </html>`);
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', loginLimiter, (req, res) => {
   if (req.body.password === DASHBOARD_PASSWORD) {
     res.cookie(AUTH_TOKEN, DASHBOARD_PASSWORD, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
     res.redirect('/dashboard');
@@ -154,7 +161,7 @@ app.post('/voice/route', (req, res) => {
 </Response>`);
 });
 
-app.get('/', (req, res) => res.send('PitchEdge server running'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // ── WebSocket — Twilio <-> ElevenLabs ─────────────────────────────────────────
 const wss = new WebSocket.Server({ server, path: '/media-stream' });
