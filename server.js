@@ -78,6 +78,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejec
         id SERIAL PRIMARY KEY,
         rep_name TEXT,
         industry TEXT DEFAULT 'Estate Agency',
+        scenario TEXT,
         score INTEGER,
         duration_seconds INTEGER,
         objections_used JSONB,
@@ -106,12 +107,47 @@ app.get('/api/calls', async (req, res) => {
   }
 });
 
-// ── Twilio voice webhook ──────────────────────────────────────────────────────
+// ── IVR Menu ──────────────────────────────────────────────────────────────────
 app.post('/voice', (req, res) => {
-  const wsUrl = `wss://${req.headers.host}/media-stream`;
   res.type('text/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
+  <Gather action="/voice/route" method="POST" numDigits="1" timeout="10">
+    <Say voice="Polly.Amy">
+      Hello and welcome to PitchEdge. Your call will be recorded for training and monitoring purposes.
+      Please select your training scenario.
+      Press 1 for Property Buyer training.
+      Press 2 for Vendor and Competing Agent training.
+    </Say>
+  </Gather>
+  <Say voice="Polly.Amy">We did not receive your selection. Please call back and try again.</Say>
+</Response>`);
+});
+
+// ── IVR Routing ───────────────────────────────────────────────────────────────
+app.post('/voice/route', (req, res) => {
+  const digit = req.body.Digits;
+  const agentMap = {
+    '1': { id: process.env.ELEVENLABS_AGENT_ID_BUYER,  scenario: 'Property Buyer' },
+    '2': { id: process.env.ELEVENLABS_AGENT_ID_VENDOR, scenario: 'Vendor / Competing Agent' },
+  };
+
+  const selected = agentMap[digit];
+
+  if (!selected) {
+    res.type('text/xml');
+    return res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Amy">Invalid selection. Please call back and try again.</Say>
+</Response>`);
+  }
+
+  const wsUrl = `wss://${req.headers.host}/media-stream?scenario=${encodeURIComponent(selected.scenario)}&agentId=${encodeURIComponent(selected.id)}`;
+
+  res.type('text/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Amy">Connecting you to your sales trainer now. Good luck.</Say>
   <Connect>
     <Stream url="${wsUrl}" />
   </Connect>
@@ -123,21 +159,22 @@ app.get('/', (req, res) => res.send('PitchEdge server running'));
 // ── WebSocket — Twilio <-> ElevenLabs ─────────────────────────────────────────
 const wss = new WebSocket.Server({ server, path: '/media-stream' });
 
-wss.on('connection', (twilioWs) => {
+wss.on('connection', (twilioWs, req) => {
   console.log('Twilio connected');
-  let elevenWs = null;
+
+  const urlParams = new URL(req.url, 'http://localhost');
+  const agentId   = urlParams.get('agentId') || process.env.ELEVENLABS_AGENT_ID;
+  const scenario  = urlParams.get('scenario') || 'Unknown';
+
   let streamSid = null;
   const callStart = Date.now();
 
-  // Rep name passed as query param from Twilio (optional, set via TwiML later)
-  const repName = null;
-
-  elevenWs = new WebSocket(
-    `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${process.env.ELEVENLABS_AGENT_ID}`,
+  const elevenWs = new WebSocket(
+    `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`,
     { headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY } }
   );
 
-  elevenWs.on('open', () => console.log('ElevenLabs connected'));
+  elevenWs.on('open', () => console.log(`ElevenLabs connected — scenario: ${scenario}`));
 
   elevenWs.on('message', (data) => {
     const msg = JSON.parse(data);
@@ -162,16 +199,13 @@ wss.on('connection', (twilioWs) => {
   twilioWs.on('close', async () => {
     console.log('Call ended');
     elevenWs?.close();
-
     const durationSeconds = Math.round((Date.now() - callStart) / 1000);
-
-    // Log the call — score/objections will be null until scoring is wired up
     try {
       await pool.query(
-        `INSERT INTO calls (rep_name, industry, duration_seconds) VALUES ($1, $2, $3)`,
-        [repName || 'Unknown', 'Estate Agency', durationSeconds]
+        `INSERT INTO calls (rep_name, industry, scenario, duration_seconds) VALUES ($1, $2, $3, $4)`,
+        ['Unknown', 'Estate Agency', scenario, durationSeconds]
       );
-      console.log('Call logged to database');
+      console.log('Call logged');
     } catch (e) {
       console.error('Failed to log call:', e.message);
     }
